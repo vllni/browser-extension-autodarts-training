@@ -1,0 +1,340 @@
+/* Autodarts Training Plans – content.css
+   Design tokens match Autodarts Chakra UI dark theme:
+   bg #1a202c  |  text rgba(255,255,255,0.92)
+   accent rgb(154,230,180)  |  border rgba(255,255,255,0.16)  */
+
+/* ── Sidebar section ──────────────────────────────────────────────── */
+
+
+/* ── Shared button primitives ─────────────────────────────────────── */
+
+.adtp-icon-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.56);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.adtp-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.adtp-btn-primary {
+  background: rgb(154, 230, 180);
+  color: #1a202c;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "Open Sans", sans-serif;
+  transition: opacity 0.15s;
+}
+.adtp-btn-primary:hover    { opacity: 0.85; }
+.adtp-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.adtp-btn-ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: "Open Sans", sans-serif;
+  transition: background 0.15s, color 0.15s;
+}
+.adtp-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* ── Plan list ────────────────────────────────────────────────────── */
+
+.adtp-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.adtp-plan-info { flex: 1; min-width: 0; }
+
+.adtp-plan-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adtp-plan-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.40);
+  margin-top: 1px;
+}
+
+.adtp-plan-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.adtp-btn-start,
+.adtp-btn-edit,
+.adtp-btn-del {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.48);
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  font-family: "Open Sans", sans-serif;
+  transition: background 0.15s, color 0.15s;
+}
+.adtp-btn-start:hover { background: rgba(154, 230, 180, 0.15); color: rgb(154, 230, 180); }
+.adtp-btn-edit:hover  { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.92); }
+.adtp-btn-del:hover   { background: rgba(252, 129, 74, 0.15);  color: rgb(252, 129, 74); }
+
+/* ── Active session panel ─────────────────────────────────────────── */
+
+.adtp-active-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(154, 230, 180, 0.06);
+  border: 1px solid rgba(154, 230, 180, 0.22);
+}
+
+.adtp-active-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(154, 230, 180);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adtp-active-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.40);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.adtp-active-step {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.80);
+}
+
+.adtp-done {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(154, 230, 180);
+}
+
+/* ── Empty state ──────────────────────────────────────────────────── */
+
+.adtp-empty {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.32);
+  text-align: center;
+  padding: 8px 4px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Modal overlay ────────────────────────────────────────────────── */
+
+.adtp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Open Sans", sans-serif;
+}
+
+.adtp-modal {
+  background: #1a202c;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  width: 540px;
+  max-width: 96vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.adtp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+}
+
+.adtp-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+}
+
+.adtp-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.adtp-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Form controls ────────────────────────────────────────────────── */
+
+.adtp-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.48);
+  margin-bottom: 6px;
+}
+
+.adtp-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.adtp-input:focus { border-color: rgb(154, 230, 180); }
+
+.adtp-select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+.adtp-select:focus { border-color: rgb(154, 230, 180); }
+.adtp-select option { background: #2d3748; }
+
+/* ── Add-step row ─────────────────────────────────────────────────── */
+
+.adtp-steps-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adtp-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.adtp-add-row .adtp-select { flex: 1; }
+.adtp-add-btn { white-space: nowrap; }
+
+.adtp-empty-steps {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.32);
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+}
+
+/* ── Step cards ───────────────────────────────────────────────────── */
+
+.adtp-step-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adtp-step-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adtp-step-num {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.56);
+  flex-shrink: 0;
+}
+
+.adtp-step-var {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.adtp-step-ctrl {
+  display: flex;
+  gap: 2px;
+}
+
+.adtp-step-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adtp-step-settings .adtp-select { flex: 1; min-width: 110px; }
+.adtp-step-settings .adtp-input  { width: 80px; flex: none; }
+
+.adtp-no-settings {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.32);
+  align-self: center;
+}

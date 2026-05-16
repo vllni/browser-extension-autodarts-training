@@ -1,0 +1,23 @@
+{
+  "name": "autodarts-training",
+  "version": "1.0.0",
+  "description": "Browser extension that adds a training plans overlay to play.autodarts.io.",
+  "license": "MIT",
+  "scripts": {
+    "build": "bash build.sh",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jest-environment-jsdom",
+    "testEnvironmentOptions": {
+      "url": "https://play.autodarts.io/"
+    },
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}
