@@ -19,6 +19,7 @@
   line-height: 1;
   transition: background 0.15s, color 0.15s;
 }
+
 .adtp-icon-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.92);
@@ -36,8 +37,15 @@
   font-family: "Open Sans", sans-serif;
   transition: opacity 0.15s;
 }
-.adtp-btn-primary:hover    { opacity: 0.85; }
-.adtp-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.adtp-btn-primary:hover {
+  opacity: 0.85;
+}
+
+.adtp-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 .adtp-btn-ghost {
   background: transparent;
@@ -50,6 +58,7 @@
   font-family: "Open Sans", sans-serif;
   transition: background 0.15s, color 0.15s;
 }
+
 .adtp-btn-ghost:hover {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.92);
@@ -67,7 +76,10 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.adtp-plan-info { flex: 1; min-width: 0; }
+.adtp-plan-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .adtp-plan-name {
   font-size: 13px;
@@ -104,9 +116,21 @@
   font-family: "Open Sans", sans-serif;
   transition: background 0.15s, color 0.15s;
 }
-.adtp-btn-start:hover { background: rgba(154, 230, 180, 0.15); color: rgb(154, 230, 180); }
-.adtp-btn-edit:hover  { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.92); }
-.adtp-btn-del:hover   { background: rgba(252, 129, 74, 0.15);  color: rgb(252, 129, 74); }
+
+.adtp-btn-start:hover {
+  background: rgba(154, 230, 180, 0.15);
+  color: rgb(154, 230, 180);
+}
+
+.adtp-btn-edit:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.adtp-btn-del:hover {
+  background: rgba(252, 129, 74, 0.15);
+  color: rgb(252, 129, 74);
+}
 
 /* ── Active session panel ─────────────────────────────────────────── */
 
@@ -243,7 +267,10 @@
   outline: none;
   transition: border-color 0.15s;
 }
-.adtp-input:focus { border-color: rgb(154, 230, 180); }
+
+.adtp-input:focus {
+  border-color: rgb(154, 230, 180);
+}
 
 .adtp-select {
   background: rgba(255, 255, 255, 0.06);
@@ -258,8 +285,14 @@
   min-width: 0;
   transition: border-color 0.15s;
 }
-.adtp-select:focus { border-color: rgb(154, 230, 180); }
-.adtp-select option { background: #2d3748; }
+
+.adtp-select:focus {
+  border-color: rgb(154, 230, 180);
+}
+
+.adtp-select option {
+  background: #2d3748;
+}
 
 /* ── Add-step row ─────────────────────────────────────────────────── */
 
@@ -274,8 +307,14 @@
   gap: 8px;
   align-items: center;
 }
-.adtp-add-row .adtp-select { flex: 1; }
-.adtp-add-btn { white-space: nowrap; }
+
+.adtp-add-row .adtp-select {
+  flex: 1;
+}
+
+.adtp-add-btn {
+  white-space: nowrap;
+}
 
 .adtp-empty-steps {
   font-size: 12px;
@@ -330,8 +369,16 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-.adtp-step-settings .adtp-select { flex: 1; min-width: 110px; }
-.adtp-step-settings .adtp-input  { width: 80px; flex: none; }
+
+.adtp-step-settings .adtp-select {
+  flex: 1;
+  min-width: 110px;
+}
+
+.adtp-step-settings .adtp-input {
+  width: 80px;
+  flex: none;
+}
 
 .adtp-no-settings {
   font-size: 11px;

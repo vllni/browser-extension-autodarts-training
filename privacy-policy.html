@@ -44,14 +44,15 @@
   </p>
   <ul>
     <li>Reads your Autodarts authentication token from the page's own login response
-        (the same token your browser already uses to talk to Autodarts).</li>
+      (the same token your browser already uses to talk to Autodarts).</li>
     <li>Calls the Autodarts REST API (<code>api.autodarts.io</code>) to create lobbies and
-        add you as a player — identical to what the Autodarts web app does when you create
-        a lobby manually.</li>
+      add you as a player — identical to what the Autodarts web app does when you create
+      a lobby manually.</li>
     <li>Stores your training plans in your browser's <code>localStorage</code>, scoped to
-        your Autodarts user ID.</li>
+      your Autodarts user ID.</li>
     <li>Stores the currently active session (which plan is running, which step) in
-        <code>sessionStorage</code>, which is cleared when you close the tab.</li>
+      <code>sessionStorage</code>, which is cleared when you close the tab.
+    </li>
   </ul>
 
   <h2>Data storage</h2>
@@ -76,9 +77,9 @@
   <ul>
     <li><code>play.autodarts.io</code> — the page it runs on.</li>
     <li><code>api.autodarts.io</code> — to create lobbies and fetch your board list, using
-        your existing Autodarts session token.</li>
+      your existing Autodarts session token.</li>
     <li><code>login.autodarts.io</code> — the extension intercepts (but does not modify or
-        forward) the token response that your browser already receives when you log in.</li>
+      forward) the token response that your browser already receives when you log in.</li>
   </ul>
   <p>No data is sent to any other server.</p>
 

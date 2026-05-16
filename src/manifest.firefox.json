@@ -6,7 +6,9 @@
   "permissions": [
     "https://api.autodarts.io/*"
   ],
-  "web_accessible_resources": ["injected.js"],
+  "web_accessible_resources": [
+    "injected.js"
+  ],
   "content_scripts": [
     {
       "matches": [
