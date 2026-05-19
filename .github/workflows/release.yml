@@ -24,12 +24,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -59,16 +59,16 @@ jobs:
         run: bash build.sh
 
       - name: Upload Chrome zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: chrome-zip
-          path: dist/autodarts-training-chrome.zip
+          path: dist/autodarts-camera-settings-chrome.zip
 
       - name: Upload Firefox zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firefox-zip
-          path: dist/autodarts-training-firefox.zip
+          path: dist/autodarts-camera-settings-firefox.zip
 
   # ── 2. Attach zips to the GitHub Release ──────────────────────────────────
   attach-to-release:
@@ -80,21 +80,21 @@ jobs:
 
     steps:
       - name: Download Chrome zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: chrome-zip
 
       - name: Download Firefox zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: firefox-zip
 
       - name: Upload assets to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
-            autodarts-training-chrome.zip
-            autodarts-training-firefox.zip
+            autodarts-camera-settings-chrome.zip
+            autodarts-camera-settings-firefox.zip
 
   # ── 3. Publish to Chrome Web Store ────────────────────────────────────────
   publish-chrome:
@@ -104,14 +104,14 @@ jobs:
 
     steps:
       - name: Download Chrome zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: chrome-zip
 
       - name: Upload & publish to Chrome Web Store
         run: |
           npx --yes chrome-webstore-upload-cli@3 upload \
-            --source autodarts-training-chrome.zip \
+            --source autodarts-camera-settings-chrome.zip \
             --extension-id "${{ secrets.CHROME_EXTENSION_ID }}" \
             --client-id "${{ secrets.CHROME_CLIENT_ID }}" \
             --client-secret "${{ secrets.CHROME_CLIENT_SECRET }}" \
@@ -126,23 +126,23 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Firefox zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: firefox-zip
 
       - name: Unpack Firefox extension
         run: |
           mkdir -p firefox-unpacked
-          unzip autodarts-training-firefox.zip -d firefox-unpacked
+          unzip autodarts-camera-settings-firefox.zip -d firefox-unpacked
 
-      - name: Sign & submit to AMO
+      - name: Submit to AMO for review
         run: |
           npx --yes web-ext@8 sign \
             --source-dir firefox-unpacked \
             --channel listed \
+            --approval-timeout 0 \
             --api-key "${{ secrets.FIREFOX_API_KEY }}" \
-            --api-secret "${{ secrets.FIREFOX_API_SECRET }}" \
-            --artifacts-dir web-ext-artifacts
+            --api-secret "${{ secrets.FIREFOX_API_SECRET }}"
