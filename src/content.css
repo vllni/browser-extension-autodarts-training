@@ -385,3 +385,81 @@
   color: rgba(255, 255, 255, 0.32);
   align-self: center;
 }
+
+/* ── Next-game toast ──────────────────────────────────────────────── */
+
+#adtp-section[data-collapsed="true"] #adtp-label {
+  display: none;
+}
+
+#adtp-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: #1a202c;
+  border: 1px solid rgba(154, 230, 180, 0.40);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  font-family: "Open Sans", sans-serif;
+  min-width: 220px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: adtp-slide-in 0.22s ease;
+}
+
+@keyframes adtp-slide-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.adtp-toast-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.adtp-toast-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgb(154, 230, 180);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adtp-toast-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 2px;
+}
+
+.adtp-toast-step {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.80);
+}
+
+.adtp-toast-done {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgb(154, 230, 180);
+}
+
+#adtp-toast .adtp-btn-primary {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 13px;
+}

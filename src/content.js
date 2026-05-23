@@ -265,6 +265,7 @@
   }
 
   function startStep(session) {
+    removeToast();
     var plans = getPlans();
     var plan = plans.find(function (p) { return p.id === session.planId; });
     if (!plan || session.stepIndex >= plan.steps.length) {
@@ -281,6 +282,65 @@
       alert('Failed to create lobby: ' + e.message);
       renderSidebarSection();
     });
+  }
+
+  /* ── Toast notification ──────────────────────────────────────────── */
+
+  function removeToast() {
+    var t = document.getElementById('adtp-toast');
+    if (t) t.remove();
+  }
+
+  function showNextGameToast(session) {
+    if (document.getElementById('adtp-toast')) return;
+    var plans = getPlans();
+    var plan = plans.find(function (p) { return p.id === session.planId; });
+    if (!plan) { saveSession(null); return; }
+
+    var total = plan.steps.length;
+    var isLast = session.stepIndex + 1 >= total;
+    var nextStep = isLast ? null : plan.steps[session.stepIndex + 1];
+
+    var toast = document.createElement('div');
+    toast.id = 'adtp-toast';
+
+    var html = '<div class="adtp-toast-header">'
+      + '<div>'
+      + '<div class="adtp-toast-title">' + esc(plan.name) + '</div>'
+      + '<div class="adtp-toast-sub">Step ' + (session.stepIndex + 1) + '\u00a0/\u00a0' + total + ' complete</div>'
+      + '</div>'
+      + '<button class="adtp-icon-btn adtp-toast-dismiss" title="Dismiss">\u2715</button>'
+      + '</div>';
+
+    if (isLast) {
+      html += '<div class="adtp-toast-done">\u2713 Plan complete!</div>'
+        + '<button class="adtp-btn-ghost adtp-toast-dismiss" style="width:100%;justify-content:center">Dismiss</button>';
+    } else {
+      html += '<div class="adtp-toast-step">Next: ' + esc(stepLabel(nextStep)) + '</div>'
+        + '<button class="adtp-btn-primary" id="adtp-toast-next">\u25b6\u00a0Start next game</button>';
+    }
+
+    toast.innerHTML = html;
+    document.body.appendChild(toast);
+
+    toast.querySelectorAll('.adtp-toast-dismiss').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        removeToast();
+        if (isLast) { saveSession(null); renderSidebarSection(); }
+      });
+    });
+
+    var nextBtn = toast.querySelector('#adtp-toast-next');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        removeToast();
+        var s = loadSession();
+        if (!s) return;
+        s.stepIndex += 1;
+        saveSession(s);
+        startStep(s);
+      });
+    }
   }
 
   /* ── URL / navigation ────────────────────────────────────────────── */
@@ -326,10 +386,42 @@
     if (iconSpan) ic.className = iconSpan.className;
     ic.innerHTML = BICEPS_SVG;
     el.appendChild(ic);
-    el.appendChild(document.createTextNode('Training Plans'));
-    el.addEventListener('click', openPlansOverlay);
 
+    var lb = document.createElement('span');
+    lb.id = 'adtp-label';
+    lb.textContent = 'Training Plans';
+    el.appendChild(lb);
+
+    el.addEventListener('click', openPlansOverlay);
     nav.appendChild(el);
+
+    // Keep our button's class in sync with the reference nav item so the
+    // Chakra-generated styles (expanded vs collapsed) are always correct.
+    if (boardsLink && typeof MutationObserver !== 'undefined') {
+      var _cmO = new MutationObserver(function () {
+        var btn = document.getElementById('adtp-section');
+        var bl = nav.querySelector('a[href="/boards"]');
+        if (btn && bl) btn.className = bl.className;
+      });
+      _cmO.observe(boardsLink, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Toggle data-collapsed on our button so CSS can hide the label text
+    // when the sidebar is narrow (icon-only mode).
+    function _syncCollapsed() {
+      var btn = document.getElementById('adtp-section');
+      var navEl = document.querySelector('.chakra-stack.navigation');
+      if (!btn || !navEl) return;
+      var collapsed = navEl.getBoundingClientRect().width < 90;
+      btn.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
+      if (collapsed) btn.setAttribute('aria-label', 'Training Plans');
+      else btn.removeAttribute('aria-label');
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(_syncCollapsed).observe(nav);
+    }
+    _syncCollapsed();
+
     return el;
   }
 
@@ -347,6 +439,10 @@
     getOrCreateSection();
     var overlay = document.getElementById('adtp-plans-overlay');
     if (overlay) renderPlansOverlayContent(overlay);
+    var session = loadSession();
+    if (session && !/^\/(lobbies|matches)\//.test(location.pathname)) {
+      showNextGameToast(session);
+    }
   }
 
   function openPlansOverlay() {
@@ -363,7 +459,7 @@
   function renderPlansOverlayContent(overlay) {
     var plans = getPlans();
     var session = loadSession();
-    var onGame = /\/(lobbies|matches)\//.test(location.pathname);
+    var onGame = /^\/(lobbies|matches)\//.test(location.pathname);
     var activePlan = session && plans.find(function (p) { return p.id === session.planId; });
 
     var html = '<div class="adtp-modal">'
@@ -421,7 +517,7 @@
     var stopBtn = overlay.querySelector('#adtp-stop-btn');
 
     if (newBtn) newBtn.addEventListener('click', function () { openEditor(null); });
-    if (stopBtn) stopBtn.addEventListener('click', function () { saveSession(null); renderSidebarSection(); });
+    if (stopBtn) stopBtn.addEventListener('click', function () { saveSession(null); removeToast(); renderSidebarSection(); });
     if (nextBtn) nextBtn.addEventListener('click', function () {
       var s = loadSession();
       if (!s) return;
