@@ -81,12 +81,24 @@ function checkChrome(file, m) {
 function checkFirefox(file, m) {
   if (m.manifest_version !== 2) fail(file, `manifest_version must be 2 (got ${m.manifest_version})`);
 
-  const gecko = (m.browser_specific_settings && m.browser_specific_settings.gecko) || null;
+  const bss = m.browser_specific_settings || {};
+  const gecko = bss.gecko || null;
   if (!gecko || !gecko.id) {
     fail(file, 'browser_specific_settings.gecko.id is required for AMO');
   }
   if (!gecko || !gecko.data_collection_permissions) {
     fail(file, 'browser_specific_settings.gecko.data_collection_permissions is required by AMO');
+  } else {
+    // data_collection_permissions landed in Firefox 140 (desktop) and 142
+    // (Android). strict_min_version must not predate that, or AMO warns.
+    const major = (v) => parseInt(String(v || '0').split('.')[0], 10);
+    if (major(gecko.strict_min_version) < 140) {
+      fail(file, `gecko.strict_min_version must be >= 140 when data_collection_permissions is set (got "${gecko.strict_min_version}")`);
+    }
+    const android = bss.gecko_android || null;
+    if (!android || major(android.strict_min_version) < 142) {
+      fail(file, `gecko_android.strict_min_version must be >= 142 when data_collection_permissions is set (got "${android && android.strict_min_version}")`);
+    }
   }
 
   // injected.js runs in the page world to capture the token; it must be exposed.
