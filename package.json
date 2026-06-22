@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "bash build.sh",
-    "test": "jest"
+    "test": "jest",
+    "check:manifests": "node scripts/validate-manifests.js"
   },
   "devDependencies": {
     "jest": "^30.0.0",

@@ -25,6 +25,11 @@ jobs:
       - name: Check JS syntax
         run: node --check src/content.js
 
+      # Validate the Chrome + Firefox manifests (there is no official Chrome CLI
+      # linter, so this covers the Chrome-unique artifact web-ext can't lint).
+      - name: Validate manifests
+        run: npm run check:manifests
+
       - name: Run tests
         run: npm test -- --ci --reporters=default
 
