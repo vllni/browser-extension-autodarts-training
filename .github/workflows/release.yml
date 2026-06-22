@@ -62,13 +62,15 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: chrome-zip
-          path: dist/autodarts-camera-settings-chrome.zip
+          path: dist/autodarts-training-chrome.zip
+          if-no-files-found: error
 
       - name: Upload Firefox zip
         uses: actions/upload-artifact@v7
         with:
           name: firefox-zip
-          path: dist/autodarts-camera-settings-firefox.zip
+          path: dist/autodarts-training-firefox.zip
+          if-no-files-found: error
 
   # ── 2. Attach zips to the GitHub Release ──────────────────────────────────
   attach-to-release:
@@ -93,8 +95,8 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            autodarts-camera-settings-chrome.zip
-            autodarts-camera-settings-firefox.zip
+            autodarts-training-chrome.zip
+            autodarts-training-firefox.zip
 
   # ── 3. Publish to Chrome Web Store ────────────────────────────────────────
   publish-chrome:
@@ -111,7 +113,7 @@ jobs:
       - name: Upload & publish to Chrome Web Store
         run: |
           npx --yes chrome-webstore-upload-cli@3 upload \
-            --source autodarts-camera-settings-chrome.zip \
+            --source autodarts-training-chrome.zip \
             --extension-id "${{ secrets.CHROME_EXTENSION_ID }}" \
             --client-id "${{ secrets.CHROME_CLIENT_ID }}" \
             --client-secret "${{ secrets.CHROME_CLIENT_SECRET }}" \
@@ -136,7 +138,7 @@ jobs:
       - name: Unpack Firefox extension
         run: |
           mkdir -p firefox-unpacked
-          unzip autodarts-camera-settings-firefox.zip -d firefox-unpacked
+          unzip autodarts-training-firefox.zip -d firefox-unpacked
 
       - name: Submit to AMO for review
         run: |
