@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Autodarts Training Plans",
   "description": "Adds a training plans overlay to play.autodarts.io so you can play back-to-back game sessions hands-free.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "permissions": [
     "https://api.autodarts.io/*"
   ],

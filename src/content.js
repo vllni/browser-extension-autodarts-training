@@ -67,6 +67,7 @@
   // back to the direct assignment that has always worked there.
   // Apply a captured Keycloak access token and refresh any open overlay.
   function applyToken(tokenStr) {
+    if (!tokenStr || tokenStr === accessToken) return;
     accessToken = tokenStr;
     var payload = decodeJwt(tokenStr);
     if (payload) {
@@ -89,6 +90,47 @@
   (function installFetchInterceptor() {
     function onToken(tokenStr) { applyToken(tokenStr); }
 
+    // Autodarts mints access tokens via POST /auth/v1/refresh (NOT a Keycloak
+    // openid-connect/token endpoint), returning {access_token}. We watch both.
+    function isTokenResponseUrl(url) {
+      return url.indexOf('openid-connect/token') !== -1 || url.indexOf('/auth/v1/refresh') !== -1;
+    }
+    // The page POSTs /gs/v0/matches/<id>/finish when a match ends (the "end"
+    // button / final checkout). That's the most direct "match over" signal.
+    function isFinishUrl(url) {
+      return /\/gs\/v0\/matches\/[^/]+\/finish(?:[/?#]|$)/.test(url);
+    }
+
+    // Pull a Keycloak access token out of an "Authorization: Bearer …" header on
+    // any request the page makes to the autodarts API. This works even when the
+    // user is already authenticated and the token endpoint is never re-hit (the
+    // silent SSO refresh runs in a hidden iframe we don't wrap, or not at all).
+    function bearerFromHeaderValue(value) {
+      if (typeof value !== 'string') return null;
+      var m = /^\s*Bearer\s+(.+)\s*$/i.exec(value);
+      return m ? m[1].trim() : null;
+    }
+    function captureAuthHeader(url, headers) {
+      if (typeof url !== 'string' || url.indexOf('api.autodarts.io') === -1) return;
+      if (!headers) return;
+      try {
+        var val = null;
+        if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+          val = headers.get('authorization');
+        } else if (Array.isArray(headers)) {
+          for (var i = 0; i < headers.length; i++) {
+            if (headers[i] && String(headers[i][0]).toLowerCase() === 'authorization') { val = headers[i][1]; break; }
+          }
+        } else if (typeof headers === 'object') {
+          for (var k in headers) {
+            if (k.toLowerCase() === 'authorization') { val = headers[k]; break; }
+          }
+        }
+        var tok = bearerFromHeaderValue(val);
+        if (tok) onToken(tok);
+      } catch (e) {}
+    }
+
     // Firefox path: inject a web_accessible_resource script that runs in the
     // PAGE's own JS world (no sandbox, no cross-compartment issues) and wraps
     // both XHR and fetch directly.  It signals us via a CustomEvent on window,
@@ -102,6 +144,7 @@
         window.addEventListener('__adtp_token__', function (e) {
           if (e && e.detail) onToken(e.detail);
         });
+        window.addEventListener('__adtp_finish__', function () { signalMatchFinished(); });
         var scriptUrl = browser.runtime.getURL('injected.js');
         // At document_start, document.documentElement is null — the HTML has
         // not been parsed yet.  document.write() inserts a synchronous
@@ -130,29 +173,45 @@
       var url = typeof req === 'string' ? req
         : req instanceof URL ? req.href
           : (req && req.url) ? req.url : '';
+      try {
+        if (typeof Request !== 'undefined' && req instanceof Request) captureAuthHeader(url, req.headers);
+        if (args[1] && args[1].headers) captureAuthHeader(url, args[1].headers);
+      } catch (e) { }
       var p = _orig.apply(this, args);
-      if (url.indexOf('openid-connect/token') !== -1) {
+      if (isTokenResponseUrl(url)) {
         p.then(function (resp) {
           resp.clone().json().then(function (data) {
             if (data && data.access_token) onToken(data.access_token);
           }).catch(function () { });
         }).catch(function () { });
+      } else if (isFinishUrl(url)) {
+        p.then(function (resp) { if (resp && resp.ok) signalMatchFinished(); }).catch(function () { });
       }
       return p;
     };
 
     var _xhrOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function (method, url) {
-      if (typeof url === 'string' && url.indexOf('openid-connect/token') !== -1) {
-        this._adtpCap = true;
+      if (typeof url === 'string') {
+        if (isTokenResponseUrl(url)) this._adtpCap = true;
+        if (isFinishUrl(url)) this._adtpFinish = true;
+        this._adtpUrl = url;
       }
       return _xhrOpen.apply(this, arguments);
     };
+    var _xhrSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+      if (this._adtpUrl && String(name).toLowerCase() === 'authorization') {
+        captureAuthHeader(this._adtpUrl, { authorization: value });
+      }
+      return _xhrSetHeader.apply(this, arguments);
+    };
     var _xhrSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function () {
-      if (this._adtpCap) {
+      if (this._adtpCap || this._adtpFinish) {
         var xhr = this;
         xhr.addEventListener('load', function () {
+          if (xhr._adtpFinish) { if (xhr.status >= 200 && xhr.status < 300) signalMatchFinished(); return; }
           try {
             var data = JSON.parse(xhr.responseText);
             if (data && data.access_token) onToken(data.access_token);
@@ -232,6 +291,14 @@
 
   function getBoards() { return apiFetch('GET', '/bs/v0/boards'); }
 
+  // The finished/winner fields live on the /state sub-resource — the bare
+  // /gs/v0/matches/<id> object does not carry them.
+  function getMatchState(matchId) { return apiFetch('GET', '/gs/v0/matches/' + matchId + '/state'); }
+
+  function isMatchFinished(st) {
+    return !!st && (st.finished === true || (typeof st.winner === 'number' && st.winner >= 0));
+  }
+
   function createAndJoinLobby(step, boardId) {
     return apiFetch('POST', '/gs/v0/lobbies', {
       variant: step.variant,
@@ -276,6 +343,10 @@
     var step = plan.steps[session.stepIndex];
     renderSidebarSection();
     createAndJoinLobby(step, session.boardId).then(function (lobby) {
+      // Autodarts reuses the lobby id as the match id, so we can record it now
+      // and watch the match regardless of how the SPA routes the URL.
+      session.matchId = lobby.id;
+      saveSession(session);
       window.location.href = '/lobbies/' + lobby.id;
     }).catch(function (e) {
       saveSession(null);
@@ -361,6 +432,106 @@
   function onNav() {
     if (!document.getElementById('adtp-section')) tryInject();
     else renderSidebarSection();
+    syncMatchWatch();
+  }
+
+  /* ── Match completion watch ──────────────────────────────────────────
+     The primary "match over" signal is the page's own POST /matches/<id>/finish,
+     intercepted by the fetch/XHR wrappers above (→ signalMatchFinished). As a
+     fallback (e.g. a match that ends without us seeing that POST), we also poll
+     the match /state for finished/winner while a plan's game is on screen.
+     Watching is keyed off session.matchId (== the lobby id we created), because
+     Autodarts may keep the URL at /lobbies/<id> for the whole match. */
+
+  var _matchTimer = null;
+  var _watchedMatchId = null;
+  var _matchSeen = false;
+
+  function onGamePage() {
+    return /^\/(lobbies|matches)\//.test(location.pathname);
+  }
+
+  function stopMatchWatch() {
+    if (_matchTimer) { clearInterval(_matchTimer); _matchTimer = null; }
+    _watchedMatchId = null;
+    _matchSeen = false;
+  }
+
+  // Called when the page finishes a match (intercepted POST) or the poll/leave
+  // check confirms it. Idempotent: onMatchFinished only sets a flag + toast.
+  function signalMatchFinished() {
+    var session = loadSession();
+    if (session && session.finishedStep !== session.stepIndex) {
+      stopMatchWatch();
+      onMatchFinished();
+    }
+  }
+
+  function syncMatchWatch() {
+    var session = loadSession();
+    // Current step already confirmed finished → nothing left to watch.
+    if (session && session.finishedStep === session.stepIndex) { stopMatchWatch(); return; }
+    var matchId = session && session.matchId;
+    if (!matchId || !onGamePage()) {
+      // Left the game screen: one last completion check so a finish missed
+      // between poll ticks still advances. Only an explicit "finished" verdict
+      // advances, so a cancelled/abandoned game never false-advances.
+      var leaving = _watchedMatchId;
+      stopMatchWatch();
+      if (leaving && session) finalMatchCheck(leaving);
+      return;
+    }
+    if (_matchTimer && _watchedMatchId === matchId) return; // already watching
+    stopMatchWatch();
+    _watchedMatchId = matchId;
+    // Poll regardless of token readiness; each tick re-checks accessToken so
+    // watching survives a token that arrives slightly after page load.
+    _matchTimer = setInterval(function () { checkMatch(matchId); }, 5000);
+    checkMatch(matchId);
+  }
+
+  function checkMatch(matchId) {
+    if (!loadSession()) { stopMatchWatch(); return; }
+    if (!accessToken) return; // retry on a later tick once the token is captured
+    getMatchState(matchId).then(function (st) {
+      if (_watchedMatchId !== matchId) return; // navigated away mid-flight
+      _matchSeen = true;
+      if (isMatchFinished(st)) { stopMatchWatch(); onMatchFinished(); }
+    }).catch(function (e) {
+      // A 404 BEFORE we've seen the match = the game hasn't started yet (no
+      // match resource). A 404 AFTER we've seen it = finished and cleaned up.
+      if (_matchSeen && _watchedMatchId === matchId && /→ 404$/.test(e.message)) {
+        stopMatchWatch();
+        onMatchFinished();
+      }
+    });
+  }
+
+  // One-shot completion check used when leaving the game screen. Only advances
+  // on an explicit finished verdict — a 404 here is ambiguous (could be a never
+  // started, then cancelled lobby), so we stay put rather than risk advancing
+  // past a cancelled game.
+  function finalMatchCheck(matchId) {
+    if (!accessToken || !loadSession()) return;
+    getMatchState(matchId).then(function (st) {
+      if (isMatchFinished(st)) onMatchFinished();
+    }).catch(function () { });
+  }
+
+  function onMatchFinished() {
+    var session = loadSession();
+    if (!session) return;
+    // Record that the current step's game actually finished. The toast and the
+    // plan only advance off this flag, so cancelling a game (which never sets
+    // it) leaves the plan paused on the current step instead of skipping ahead.
+    session.finishedStep = session.stepIndex;
+    saveSession(session);
+    // Show the next-game / "Plan complete!" toast right on the results screen.
+    showNextGameToast(session);
+    // If that was the final step, end the session automatically.
+    var plan = getPlans().find(function (p) { return p.id === session.planId; });
+    if (!plan || session.stepIndex + 1 >= plan.steps.length) saveSession(null);
+    renderSidebarSection();
   }
 
   /* ── Sidebar rendering ───────────────────────────────────────────── */
@@ -437,12 +608,19 @@
 
   function renderSidebarSection() {
     getOrCreateSection();
+    var session = loadSession();
+    // Only surface the next-game / completion toast once the current step's game
+    // is confirmed finished (finishedStep === stepIndex). This re-shows the toast
+    // after a reload and, crucially, does NOT fire just because we left a game
+    // page — so cancelling a lobby no longer looks like a finished step.
+    if (session && session.finishedStep === session.stepIndex
+        && !/^\/(lobbies|matches)\//.test(location.pathname)) {
+      showNextGameToast(session);
+      var plan = getPlans().find(function (p) { return p.id === session.planId; });
+      if (!plan || session.stepIndex + 1 >= plan.steps.length) saveSession(null);
+    }
     var overlay = document.getElementById('adtp-plans-overlay');
     if (overlay) renderPlansOverlayContent(overlay);
-    var session = loadSession();
-    if (session && !/^\/(lobbies|matches)\//.test(location.pathname)) {
-      showNextGameToast(session);
-    }
   }
 
   function openPlansOverlay() {
@@ -476,8 +654,13 @@
         + '<div class="adtp-active-name">' + esc(activePlan.name) + '</div>'
         + '<div class="adtp-active-sub">Step ' + (session.stepIndex + 1) + ' / ' + total + '</div>'
         + '<div class="adtp-active-step">' + esc(step ? stepLabel(step) : '\u2014') + '</div>';
+      var stepDone = session.finishedStep === session.stepIndex;
       if (onGame) {
         html += '<div class="adtp-active-sub">Game in progress\u2026</div>';
+      } else if (!stepDone) {
+        // Current step hasn't been played yet (just started, or its game was
+        // cancelled). Offer to (re)start this same step rather than skip it.
+        html += '<button class="adtp-btn-primary" id="adtp-start-btn">\u25b6 Start game</button>';
       } else if (session.stepIndex + 1 < total) {
         html += '<button class="adtp-btn-primary" id="adtp-next-btn">\u25b6 Next game</button>';
       } else {
@@ -514,10 +697,15 @@
 
     var newBtn = overlay.querySelector('#adtp-new-btn');
     var nextBtn = overlay.querySelector('#adtp-next-btn');
+    var startBtn = overlay.querySelector('#adtp-start-btn');
     var stopBtn = overlay.querySelector('#adtp-stop-btn');
 
     if (newBtn) newBtn.addEventListener('click', function () { openEditor(null); });
     if (stopBtn) stopBtn.addEventListener('click', function () { saveSession(null); removeToast(); renderSidebarSection(); });
+    if (startBtn) startBtn.addEventListener('click', function () {
+      var s = loadSession();
+      if (s) startStep(s); // (re)start the current step without advancing
+    });
     if (nextBtn) nextBtn.addEventListener('click', function () {
       var s = loadSession();
       if (!s) return;
@@ -796,10 +984,12 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       tryInject();
+      syncMatchWatch();
       _mo.observe(document.body, { childList: true, subtree: true });
     });
   } else {
     tryInject();
+    syncMatchWatch();
     _mo.observe(document.body, { childList: true, subtree: true });
   }
 
