@@ -25,5 +25,19 @@ jobs:
       - name: Check JS syntax
         run: node --check src/content.js
 
+      # Validate the Chrome + Firefox manifests (there is no official Chrome CLI
+      # linter, so this covers the Chrome-unique artifact web-ext can't lint).
+      - name: Validate manifests
+        run: npm run check:manifests
+
       - name: Run tests
         run: npm test -- --ci --reporters=default
+
+      - name: Build extension packages
+        run: bash build.sh
+
+      # web-ext is Mozilla's add-on linter, so it validates the Firefox build
+      # only. Run against the built package (what we actually submit to AMO) and
+      # fail the job on any warning, not just errors.
+      - name: Validate Firefox package (warnings = errors)
+        run: npx --yes web-ext@8 lint --source-dir dist/firefox --warnings-as-errors

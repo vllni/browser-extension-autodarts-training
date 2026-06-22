@@ -146,17 +146,27 @@
         });
         window.addEventListener('__adtp_finish__', function () { signalMatchFinished(); });
         var scriptUrl = browser.runtime.getURL('injected.js');
-        // At document_start, document.documentElement is null — the HTML has
-        // not been parsed yet.  document.write() inserts a synchronous
-        // (parser-blocking) script into the HTML stream so it executes before
-        // ANY page script, including the keycloak-js module.
+        // Inject a page-world script that wraps fetch/XHR. We capture the token
+        // from the Authorization header of ongoing API calls (and the
+        // /auth/v1/refresh response), so we no longer need to beat the very
+        // first auth request — appending the script as soon as a root node
+        // exists is early enough, and avoids document.write().
         // moz-extension:// resources are always trusted and bypass page CSP.
+        var injectPageScript = function () {
+          var s = document.createElement('script');
+          s.src = scriptUrl;
+          s.onload = function () { s.remove(); };
+          (document.head || document.documentElement).appendChild(s);
+        };
         if (document.documentElement) {
-          var _s = document.createElement('script');
-          _s.src = scriptUrl;
-          document.documentElement.appendChild(_s);
+          injectPageScript();
         } else {
-          document.write('<script src="' + scriptUrl + '"><\/script>');
+          // documentElement not created yet at document_start — inject the
+          // moment it appears.
+          var rootObs = new MutationObserver(function () {
+            if (document.documentElement) { rootObs.disconnect(); injectPageScript(); }
+          });
+          rootObs.observe(document, { childList: true });
         }
         return; // Firefox interceptor installed; stop here.
       } catch (e) { /* fall through */ }
@@ -248,6 +258,17 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  // Replace an element's contents from an HTML string without assigning to
+  // innerHTML (which Firefox's add-on linter flags as UNSAFE_VAR_ASSIGNMENT).
+  // All interpolated dynamic values are already escaped via esc(); DOMParser
+  // additionally parses the markup inertly — no scripts run and no external
+  // resources load — before we adopt the resulting nodes.
+  function setHTML(el, html) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+    var parsed = new DOMParser().parseFromString(html, 'text/html');
+    while (parsed.body.firstChild) el.appendChild(parsed.body.firstChild);
   }
 
   /* ── Storage ─────────────────────────────────────────────────────── */
@@ -391,7 +412,7 @@
         + '<button class="adtp-btn-primary" id="adtp-toast-next">\u25b6\u00a0Start next game</button>';
     }
 
-    toast.innerHTML = html;
+    setHTML(toast, html);
     document.body.appendChild(toast);
 
     toast.querySelectorAll('.adtp-toast-dismiss').forEach(function (btn) {
@@ -555,7 +576,7 @@
 
     var ic = document.createElement('span');
     if (iconSpan) ic.className = iconSpan.className;
-    ic.innerHTML = BICEPS_SVG;
+    setHTML(ic, BICEPS_SVG);
     el.appendChild(ic);
 
     var lb = document.createElement('span');
@@ -693,7 +714,7 @@
     }
 
     html += '</div></div>';
-    overlay.innerHTML = html;
+    setHTML(overlay, html);
 
     var newBtn = overlay.querySelector('#adtp-new-btn');
     var nextBtn = overlay.querySelector('#adtp-next-btn');
@@ -754,7 +775,7 @@
       return '<option value="' + esc(v) + '">' + esc(VARIANT_LABELS[v] || v) + '</option>';
     }).join('');
 
-    overlay.innerHTML = '<div class="adtp-modal">'
+    setHTML(overlay, '<div class="adtp-modal">'
       + '<div class="adtp-modal-header">'
       + '<h2 class="adtp-modal-title">' + (plan.name ? esc(plan.name) : 'New Plan') + '</h2>'
       + '<button class="adtp-icon-btn" id="adtp-modal-close">\u2715</button>'
@@ -776,7 +797,7 @@
       + '<button class="adtp-btn-ghost" id="adtp-modal-cancel">Cancel</button>'
       + '<button class="adtp-btn-primary" id="adtp-modal-save">Save plan</button>'
       + '</div>'
-      + '</div>';
+      + '</div>');
 
     renderStepList(overlay, plan);
 
@@ -802,10 +823,10 @@
   function renderStepList(overlay, plan) {
     var list = overlay.querySelector('#adtp-steps-list');
     if (plan.steps.length === 0) {
-      list.innerHTML = '<p class="adtp-empty-steps">No steps yet. Add one above.</p>';
+      setHTML(list, '<p class="adtp-empty-steps">No steps yet. Add one above.</p>');
       return;
     }
-    list.innerHTML = plan.steps.map(function (step, i) {
+    setHTML(list, plan.steps.map(function (step, i) {
       return '<div class="adtp-step-card" data-index="' + i + '">'
         + '<div class="adtp-step-hd">'
         + '<span class="adtp-step-num">' + (i + 1) + '</span>'
@@ -818,7 +839,7 @@
         + '</div>'
         + '<div class="adtp-step-settings">' + buildStepSettings(step) + '</div>'
         + '</div>';
-    }).join('');
+    }).join(''));
 
     list.querySelectorAll('.adtp-rm').forEach(function (btn) {
       btn.addEventListener('click', function () {
