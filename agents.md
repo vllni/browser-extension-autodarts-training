@@ -2,7 +2,7 @@
 
 ## Overview
 
-Browser extension that adds a training plans overlay to `play.autodarts.io`. A training plan is an ordered list of games (any variant) played back-to-back. The extension creates a private lobby with predefined settings automatically, so the user only needs to click "Start game". All plans and user data are stored in browser `localStorage`.
+Browser extension that adds a training plans overlay to `play.autodarts.com`. A training plan is an ordered list of games (any variant) played back-to-back. The extension creates a private lobby with predefined settings automatically, so the user only needs to click "Start game". All plans and user data are stored in browser `localStorage`.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ Browser extension that adds a training plans overlay to `play.autodarts.io`. A t
 | `src/content.css` | Styles matching the Autodarts dark theme |
 | `src/injected.js` | Firefox-only page-world script (web_accessible_resource) — wraps XHR/fetch in the page's own JS context and dispatches `CustomEvent('__adtp_token__')` so content.js can receive the auth token |
 | `src/manifest.chrome.json` | Chrome MV3 manifest (`"world": "MAIN"` — runs in page context directly) |
-| `src/manifest.firefox.json` | Firefox MV2 manifest (gecko ID + `browser_specific_settings`, declares `injected.js` as web_accessible_resource, `https://api.autodarts.io/*` permission) |
+| `src/manifest.firefox.json` | Firefox MV2 manifest (gecko ID + `browser_specific_settings`, declares `injected.js` as web_accessible_resource, `https://api.autodarts.com/*` permission) |
 | `build.sh` | Builds `dist/chrome/` and `dist/firefox/` and zips both; copies `injected.js` to `dist/firefox/` only |
 | `tests/content.test.js` | Jest + jsdom tests for the content script (25 tests) |
 
@@ -26,14 +26,14 @@ bash build.sh     # produces dist/chrome/ dist/firefox/ and .zip packages
 
 ## Key Conventions
 
-- **Match pattern** is `https://play.autodarts.io/*` — the play app runs at this origin.
+- **Match pattern** is `https://play.autodarts.com/*` — the play app runs at this origin.
 - **run_at**: `document_start` — the content script must load before app JS to install the fetch interceptor.
 - **Design tokens** (dark bg `#1a202c`, accent green `rgb(154,230,180)`, border `rgba(255,255,255,0.16)`) must be preserved to match the Autodarts Chakra UI dark theme.
-- **Auth token capture**: The Autodarts login flow uses **XHR** (not fetch) to POST to `https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token`. The extension intercepts the XHR response to read `access_token`. The token expires in 300 s; re-capture on each fresh response.
+- **Auth token capture**: The Autodarts login flow mints tokens via `POST https://api.autodarts.com/auth/v1/refresh` (legacy: the Keycloak endpoint `https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token`) using **XHR** (not fetch). The extension matches both by path and intercepts the response to read `access_token`. As a fallback it also lifts the `Authorization: Bearer` header off any page request to `api.autodarts.com` (or the legacy `api.autodarts.io`). The token expires in 300 s; re-capture on each fresh response.
   - **Chrome**: content script runs in `"world": "MAIN"`, so it wraps `window.XMLHttpRequest.prototype.open/send` and `window.fetch` directly.
   - **Firefox**: content script runs in an isolated sandbox. At `document_start` when `document.documentElement` is `null`, inject `injected.js` via `document.write('<script src="moz-extension://…/injected.js">')`. `injected.js` runs in the page's own JS world, wraps XHR/fetch, and dispatches `CustomEvent('__adtp_token__', { detail: token })` on `window`. The content script listens with `window.addEventListener('__adtp_token__', …)`.
 - **UserId / username**: Decode the JWT payload (middle base64 segment) to read `sub` (userId) and `preferred_username` (name). No API call needed.
-- **BoardId**: `GET https://api.autodarts.io/bs/v0/boards` returns array of boards. The extension should let the user pick one (or default to the first connected board).
+- **BoardId**: `GET https://api.autodarts.com/bs/v0/boards` returns array of boards. The extension should let the user pick one (or default to the first connected board).
 - **Storage key**: `adtp-plans-{userId}` in `localStorage` stores the JSON array of training plans.
 - **Plan execution flow**:
   1. User clicks "Start plan" → extension picks the next pending game step.
@@ -45,21 +45,21 @@ bash build.sh     # produces dist/chrome/ dist/firefox/ and .zip packages
 
 ## API Reference
 
-All requests to `api.autodarts.io` require `Authorization: Bearer <access_token>`.
+All requests to `api.autodarts.com` require `Authorization: Bearer <access_token>`.
 
 ### Auth
-- Token endpoint: `POST https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token`
+- Token endpoint: `POST https://api.autodarts.com/auth/v1/refresh` (legacy Keycloak: `POST https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token`)
   - Response: `{ access_token, refresh_token, expires_in: 300 }`
   - The content script intercepts this response to capture `access_token`.
   - JWT payload (base64 decoded): `sub` = userId, `preferred_username` = name.
 
 ### Boards
-- `GET https://api.autodarts.io/bs/v0/boards` — returns array of board objects: `[{ id, name, state: { connected } }, ...]`
+- `GET https://api.autodarts.com/bs/v0/boards` — returns array of board objects: `[{ id, name, state: { connected } }, ...]`
 
 ### Lobby lifecycle
-- `POST https://api.autodarts.io/gs/v0/lobbies` — create lobby (body described per variant below) → `{ id, ... }`
-- `POST https://api.autodarts.io/gs/v0/lobbies/{id}/players` — join lobby: `{ "name": "<username>", "userId": "<sub>", "boardId": "<boardId>" }`
-- `GET https://api.autodarts.io/gs/v0/lobbies/{id}` — poll lobby state
+- `POST https://api.autodarts.com/gs/v0/lobbies` — create lobby (body described per variant below) → `{ id, ... }`
+- `POST https://api.autodarts.com/gs/v0/lobbies/{id}/players` — join lobby: `{ "name": "<username>", "userId": "<sub>", "boardId": "<boardId>" }`
+- `GET https://api.autodarts.com/gs/v0/lobbies/{id}` — poll lobby state
 
 ## Game Variants & Lobby Payloads
 
@@ -244,7 +244,7 @@ On first auth, if `adtp-plans` (anonymous key) exists in `localStorage`, its con
 
 ## Browser Interaction & Screenshots
 
-When any agent task requires opening or interacting with `play.autodarts.io` in a browser:
+When any agent task requires opening or interacting with `play.autodarts.com` in a browser:
 
 - **Use the Playwright MCP tools** (`mcp_playwright_browser_*`) for all browser interaction — navigation, clicking, JavaScript evaluation, and taking screenshots. Do not use other browser automation approaches.
 - **Screenshot dimensions**: all screenshots must be **1280 × 800 px**. Set the viewport before navigating:

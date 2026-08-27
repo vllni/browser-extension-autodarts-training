@@ -38,14 +38,14 @@
 
   <h2>What the extension does</h2>
   <p>
-    The extension runs on <code>https://play.autodarts.io</code>. It adds a Training Plans
+    The extension runs on <code>https://play.autodarts.com</code>. It adds a Training Plans
     sidebar to the page so you can define ordered sequences of darts games and have lobbies
     created automatically on your behalf. To do this it:
   </p>
   <ul>
     <li>Reads your Autodarts authentication token from the page's own login response
       (the same token your browser already uses to talk to Autodarts).</li>
-    <li>Calls the Autodarts REST API (<code>api.autodarts.io</code>) to create lobbies and
+    <li>Calls the Autodarts REST API (<code>api.autodarts.com</code>) to create lobbies and
       add you as a player — identical to what the Autodarts web app does when you create
       a lobby manually.</li>
     <li>Stores your training plans in your browser's <code>localStorage</code>, scoped to
@@ -59,7 +59,7 @@
   <p>
     All data (training plans, active session state) is stored locally in your browser using
     <code>localStorage</code> and <code>sessionStorage</code>. It never leaves your device
-    except as part of normal API calls to <code>api.autodarts.io</code> (e.g. your username
+    except as part of normal API calls to <code>api.autodarts.com</code> (e.g. your username
     and board ID when joining a lobby).
   </p>
   <p>
@@ -75,11 +75,12 @@
     The extension only communicates with:
   </p>
   <ul>
-    <li><code>play.autodarts.io</code> — the page it runs on.</li>
-    <li><code>api.autodarts.io</code> — to create lobbies and fetch your board list, using
+    <li><code>play.autodarts.com</code> — the page it runs on.</li>
+    <li><code>api.autodarts.com</code> — to create lobbies and fetch your board list, using
       your existing Autodarts session token.</li>
-    <li><code>login.autodarts.io</code> — the extension intercepts (but does not modify or
-      forward) the token response that your browser already receives when you log in.</li>
+    <li>The extension intercepts (but does not modify or forward) the token response that
+      your browser already receives when you log in — served by <code>api.autodarts.com</code>,
+      or by the legacy <code>login.autodarts.io</code> endpoint for older sessions.</li>
   </ul>
   <p>No data is sent to any other server.</p>
 

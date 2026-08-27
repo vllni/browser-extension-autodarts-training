@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
   "name": "Autodarts Training Plans",
-  "description": "Adds a training plans overlay to play.autodarts.io so you can play back-to-back game sessions hands-free.",
+  "description": "Adds a training plans overlay to play.autodarts.com so you can play back-to-back game sessions hands-free.",
   "version": "1.0.4",
   "permissions": [
-    "https://api.autodarts.io/*"
+    "https://api.autodarts.com/*"
   ],
   "web_accessible_resources": [
     "injected.js"
@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://play.autodarts.io/*"
+        "https://play.autodarts.com/*"
       ],
       "js": [
         "content.js"

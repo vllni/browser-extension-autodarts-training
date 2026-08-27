@@ -200,7 +200,7 @@ describe('plan storage helpers', function () {
     });
     global.history = { pushState: jest.fn(), replaceState: jest.fn() };
     var m = require('../src/content.js');
-    return window.fetch('https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token')
+    return window.fetch('https://api.autodarts.com/auth/v1/refresh')
       .then(function () { return new Promise(function (r) { setTimeout(r, 10); }); })
       .then(function () {
         expect(m.planKey()).toBe('adtp-plans-user-abc');
@@ -226,7 +226,7 @@ describe('plan storage helpers', function () {
     });
     global.history = { pushState: jest.fn(), replaceState: jest.fn() };
     var m = require('../src/content.js');
-    return window.fetch('https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token')
+    return window.fetch('https://api.autodarts.com/auth/v1/refresh')
       .then(function () { return new Promise(function (r) { setTimeout(r, 10); }); })
       .then(function () {
         expect(m.getPlans()).toEqual(existing);
@@ -287,7 +287,8 @@ describe('fetch interceptor', function () {
 
     require('../src/content.js');
 
-    // Simulate the page calling the Keycloak token endpoint.
+    // Simulate the page calling the legacy Keycloak token endpoint — still
+    // matched by path, so older sessions keep working after the .com move.
     await window.fetch('https://login.autodarts.io/realms/autodarts/protocol/openid-connect/token');
     await new Promise(function (r) { setTimeout(r, 10); });
 

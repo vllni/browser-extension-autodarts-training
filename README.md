@@ -1,6 +1,6 @@
 # Autodarts Training Plans
 
-A browser extension for [play.autodarts.io](https://play.autodarts.io) that lets you build and run structured training sessions. Define an ordered list of games across any variant, and the extension creates each private lobby automatically — you just click **Start game**.
+A browser extension for [play.autodarts.com](https://play.autodarts.com) that lets you build and run structured training sessions. Define an ordered list of games across any variant, and the extension creates each private lobby automatically — you just click **Start game**.
 
 ---
 
@@ -21,7 +21,7 @@ A browser extension for [play.autodarts.io](https://play.autodarts.io) that lets
 - **11 game variants** — X01, Cricket / Tactics, ATC, Segment Training, Bob's 27, Bermuda, Gotcha, Shanghai, RTW, Random Checkout, Count Up
 - **Per-user storage** — plans are stored in `localStorage` scoped to your Autodarts account; multiple users on the same browser stay independent
 - **Session persistence** — an active plan survives page navigation and picks back up after each game ends
-- **No account or server** — everything runs locally; the only network traffic is to `autodarts.io` itself
+- **No account or server** — everything runs locally; the only network traffic is to `autodarts.com` itself
 
 ---
 
@@ -57,7 +57,7 @@ Then load `dist/chrome/` or `dist/firefox/` as an unpacked extension as above.
 
 ## Usage
 
-1. Navigate to [play.autodarts.io](https://play.autodarts.io) and log in.
+1. Navigate to [play.autodarts.com](https://play.autodarts.com) and log in.
 2. Click **Training Plans** in the left sidebar.
 3. Press **+** to create a new plan, give it a name, and add steps using the variant picker.
 4. Click **▶** to start the plan — the first lobby is created automatically.
@@ -94,7 +94,7 @@ Then load `dist/chrome/` or `dist/firefox/` as an unpacked extension as above.
 
 ## Privacy
 
-All data (training plans, active session) is stored exclusively in your browser's `localStorage` and `sessionStorage`. No data is sent to any third-party server. The extension communicates only with `play.autodarts.io` and `api.autodarts.io`.
+All data (training plans, active session) is stored exclusively in your browser's `localStorage` and `sessionStorage`. No data is sent to any third-party server. The extension communicates only with `play.autodarts.com` and `api.autodarts.com`.
 
 ---
 

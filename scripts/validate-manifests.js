@@ -52,8 +52,8 @@ function checkCommon(file, m) {
     fail(file, 'content_scripts[0] is missing');
     return;
   }
-  if (!(cs.matches || []).includes('https://play.autodarts.io/*')) {
-    fail(file, 'content_scripts[0].matches must include "https://play.autodarts.io/*"');
+  if (!(cs.matches || []).includes('https://play.autodarts.com/*')) {
+    fail(file, 'content_scripts[0].matches must include "https://play.autodarts.com/*"');
   }
   if (cs.run_at !== 'document_start') {
     fail(file, `content_scripts[0].run_at must be "document_start" (got "${cs.run_at}")`);
@@ -108,8 +108,8 @@ function checkFirefox(file, m) {
   if (!fs.existsSync(path.join(SRC, 'injected.js'))) {
     fail(file, 'referenced asset "injected.js" does not exist');
   }
-  if (!(m.permissions || []).includes('https://api.autodarts.io/*')) {
-    fail(file, 'permissions must include "https://api.autodarts.io/*"');
+  if (!(m.permissions || []).includes('https://api.autodarts.com/*')) {
+    fail(file, 'permissions must include "https://api.autodarts.com/*"');
   }
 }
 
