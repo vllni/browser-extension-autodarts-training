@@ -105,13 +105,18 @@
     // any request the page makes to the autodarts API. This works even when the
     // user is already authenticated and the token endpoint is never re-hit (the
     // silent SSO refresh runs in a hidden iframe we don't wrap, or not at all).
+    // Autodarts moved from autodarts.io to autodarts.com; the legacy host is
+    // still accepted so the capture keeps working while the migration settles.
+    function isApiUrl(url) {
+      return url.indexOf('api.autodarts.com') !== -1 || url.indexOf('api.autodarts.io') !== -1;
+    }
     function bearerFromHeaderValue(value) {
       if (typeof value !== 'string') return null;
       var m = /^\s*Bearer\s+(.+)\s*$/i.exec(value);
       return m ? m[1].trim() : null;
     }
     function captureAuthHeader(url, headers) {
-      if (typeof url !== 'string' || url.indexOf('api.autodarts.io') === -1) return;
+      if (typeof url !== 'string' || !isApiUrl(url)) return;
       if (!headers) return;
       try {
         var val = null;
@@ -304,7 +309,7 @@
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(body);
     }
-    return fetch('https://api.autodarts.io' + path, opts).then(function (res) {
+    return fetch('https://api.autodarts.com' + path, opts).then(function (res) {
       if (!res.ok) throw new Error('API ' + method + ' ' + path + ' \u2192 ' + res.status);
       return res.text().then(function (t) { return t ? JSON.parse(t) : null; });
     });
