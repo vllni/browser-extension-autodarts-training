@@ -15,6 +15,7 @@ Browser extension that adds a training plans overlay to `play.autodarts.com`. A 
 | `src/manifest.firefox.json` | Firefox MV2 manifest (gecko ID + `browser_specific_settings`, declares `injected.js` as web_accessible_resource, `https://api.autodarts.com/*` permission) |
 | `build.sh` | Builds `dist/chrome/` and `dist/firefox/` and zips both; copies `injected.js` to `dist/firefox/` only |
 | `tests/content.test.js` | Jest + jsdom tests for the content script (25 tests) |
+| `store/listing.md` | Chrome Web Store listing copy (title, short + detailed description per locale) and the keyword-spam rules it must obey |
 
 ## Build & Test
 
